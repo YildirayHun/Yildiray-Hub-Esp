@@ -1,7 +1,7 @@
 -- ESP PLAYERS, HITBOX - YİLDİRAY HUB
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local madebyYildiray = true -- rznnq -> Yildiray
+local madebyYildiray = true 
 local espConnections = {}
 
 local function createESP(plr)
