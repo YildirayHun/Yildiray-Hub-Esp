@@ -1,33 +1,33 @@
+-- ESP PLAYERS, HITBOX - YİLDİRAY HUB
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local madebyyildiray = true -- Değişken adı güncellendi
+local madebyYildiray = true -- rznnq -> Yildiray
 local espConnections = {}
 
 local function createESP(plr)
     if plr == player then return end
     if not plr.Character then return end
-    -- Kontrol etiketi yildiray olarak değiştirildi
-    if plr.Character:FindFirstChild("followme@yildiray") then return end 
+    if plr.Character:FindFirstChild("followme@Yildiray") then return end
     
     local char = plr.Character
     local hrp = char:FindFirstChild("HumanoidRootPart")
     local head = char:FindFirstChild("Head")
     if not (hrp and head) then return end
     
-    -- Hitbox Ayarları
+    -- HİTBOX (GRİ RENK YAPILDI)
     local hitbox = Instance.new("BoxHandleAdornment")
-    hitbox.Name = "followme@yildiray" -- İsim güncellendi
+    hitbox.Name = "followme@Yildiray"
     hitbox.Adornee = hrp
     hitbox.Size = Vector3.new(4, 6, 2)
-    hitbox.Color3 = Color3.fromRGB(128, 0, 128) -- Mor renk korundu
+    hitbox.Color3 = Color3.fromRGB(150, 150, 150) -- Gri
     hitbox.Transparency = 0.6
     hitbox.ZIndex = 10
     hitbox.AlwaysOnTop = true
     hitbox.Parent = char
     
-    -- İsim Etiketi (BillboardGui)
+    -- İSİM ETİKETİ (SARI RENK YAPILDI)
     local billboard = Instance.new("BillboardGui")
-    billboard.Name = "yildiray_esp_gui" -- İsim güncellendi
+    billboard.Name = "YildirayHub_ESP"
     billboard.Adornee = head
     billboard.Size = UDim2.new(0, 200, 0, 50)
     billboard.StudsOffset = Vector3.new(0, 3, 0)
@@ -38,19 +38,19 @@ local function createESP(plr)
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
     label.Text = plr.DisplayName or plr.Name
-    label.TextColor3 = Color3.fromRGB(255, 0, 255)
+    label.TextColor3 = Color3.fromRGB(255, 215, 0) -- Sarı
     label.Font = Enum.Font.Arcade
     label.TextScaled = true
-    label.TextStrokeTransparency = 0.7
-    label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    label.TextStrokeTransparency = 0.5
+    label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0) -- Siyah gölge (Sarıyı belli eder)
     label.Parent = billboard
 end
 
 local function removeESP(plr)
     if not plr.Character then return end
-    -- Yeni isimlere göre silme işlemi
-    local hitbox = plr.Character:FindFirstChild("followme@yildiray")
-    local nameGui = plr.Character:FindFirstChild("yildiray_esp_gui")
+    -- rznnq etiketleri yerine yeni isimler kontrol ediliyor
+    local hitbox = plr.Character:FindFirstChild("followme@Yildiray")
+    local nameGui = plr.Character:FindFirstChild("YildirayHub_ESP")
     if hitbox then hitbox:Destroy() end
     if nameGui then nameGui:Destroy() end
 end
@@ -63,7 +63,7 @@ local function enableESP()
             end
             local conn = plr.CharacterAdded:Connect(function()
                 task.wait(0.1)
-                if madebyyildiray then
+                if madebyYildiray then
                     createESP(plr)
                 end
             end)
@@ -75,7 +75,7 @@ local function enableESP()
         if plr == player then return end
         local charAddedConn = plr.CharacterAdded:Connect(function()
             task.wait(0.1)
-            if madebyyildiray then
+            if madebyYildiray then
                 createESP(plr)
             end
         end)
@@ -85,4 +85,27 @@ local function enableESP()
 end
 
 local function disableESP()
-    for _, plr in ipairs(Players:
+    for _, plr in ipairs(Players:GetPlayers()) do
+        removeESP(plr)
+    end
+    for _, conn in ipairs(espConnections) do
+        if conn and conn.Connected then
+            conn:Disconnect()
+        end
+    end
+    espConnections = {}
+end
+
+-- Karakter değişince yenileme
+player.CharacterAdded:Connect(function()
+    task.wait(0.1)
+    if madebyYildiray then
+        enableESP()
+    else
+        disableESP()
+    end
+end)
+
+if madebyYildiray then
+    enableESP()
+end
