@@ -1,111 +1,90 @@
--- ESP PLAYERS, HITBOX - YİLDİRAY HUB
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local madebyYildiray = true 
-local espConnections = {}
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
 
-local function createESP(plr)
-    if plr == player then return end
-    if not plr.Character then return end
-    if plr.Character:FindFirstChild("followme@Yildiray") then return end
-    
-    local char = plr.Character
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local head = char:FindFirstChild("Head")
-    if not (hrp and head) then return end
-    
-    -- HİTBOX (GRİ RENK YAPILDI)
-    local hitbox = Instance.new("BoxHandleAdornment")
-    hitbox.Name = "followme@Yildiray"
-    hitbox.Adornee = hrp
-    hitbox.Size = Vector3.new(4, 6, 2)
-    hitbox.Color3 = Color3.fromRGB(150, 150, 150) -- Gri
-    hitbox.Transparency = 0.6
-    hitbox.ZIndex = 10
-    hitbox.AlwaysOnTop = true
-    hitbox.Parent = char
-    
-    -- İSİM ETİKETİ (SARI RENK YAPILDI)
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "YildirayHub_ESP"
-    billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 3, 0)
-    billboard.AlwaysOnTop = true
-    billboard.Parent = char
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = plr.DisplayName or plr.Name
-    label.TextColor3 = Color3.fromRGB(255, 215, 0) -- Sarı
-    label.Font = Enum.Font.Arcade
-    label.TextScaled = true
-    label.TextStrokeTransparency = 0.5
-    label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0) -- Siyah gölge (Sarıyı belli eder)
-    label.Parent = billboard
-end
+-- ### BÜYÜK ESP AYARLARI ###
+local SETTINGS = {
+    BoxColor = Color3.fromRGB(255, 215, 0), -- Parlak Sarı
+    TextColor = Color3.fromRGB(255, 255, 255), -- Beyaz
+    BoxThickness = 2.5,  -- Daha kalın kutu çizgileri
+    TextSize = 20,       -- Büyük yazı boyutu
+    Outline = true       -- Yazı etrafında siyah gölge (daha iyi okunur)
+}
 
-local function removeESP(plr)
-    if not plr.Character then return end
-    -- rznnq etiketleri yerine yeni isimler kontrol ediliyor
-    local hitbox = plr.Character:FindFirstChild("followme@Yildiray")
-    local nameGui = plr.Character:FindFirstChild("YildirayHub_ESP")
-    if hitbox then hitbox:Destroy() end
-    if nameGui then nameGui:Destroy() end
-end
+local function CreateESP(Player)
+    -- Çizim Elemanları
+    local Box = Drawing.new("Square")
+    Box.Visible = false
+    Box.Color = SETTINGS.BoxColor
+    Box.Thickness = SETTINGS.BoxThickness
+    Box.Filled = false
 
-local function enableESP()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
-            if plr.Character then
-                createESP(plr)
-            end
-            local conn = plr.CharacterAdded:Connect(function()
-                task.wait(0.1)
-                if madebyYildiray then
-                    createESP(plr)
+    local Name = Drawing.new("Text")
+    Name.Visible = false
+    Name.Color = SETTINGS.TextColor
+    Name.Size = SETTINGS.TextSize
+    Name.Center = true
+    Name.Outline = SETTINGS.Outline
+    Name.Font = 2 -- Modern Bold Font
+
+    local function Update()
+        local Connection
+        Connection = RunService.RenderStepped:Connect(function()
+            if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") and Player.Character:FindFirstChild("Humanoid") and Player ~= LocalPlayer and Player.Character.Humanoid.Health > 0 then
+                
+                local RootPart = Player.Character.HumanoidRootPart
+                local Head = Player.Character:FindFirstChild("Head")
+                if not Head then return end
+
+                local RootPos, OnScreen = Camera:WorldToViewportPoint(RootPart.Position)
+                local HeadPos = Camera:WorldToViewportPoint(Head.Position + Vector3.new(0, 0.5, 0))
+                local LegPos = Camera:WorldToViewportPoint(RootPart.Position - Vector3.new(0, 3, 0))
+
+                if OnScreen then
+                    -- Kutu Boyutlandırma (Daha Geniş ve Belirgin)
+                    local BoxHeight = math.abs(HeadPos.Y - LegPos.Y)
+                    local BoxWidth = BoxHeight / 1.5
+                    
+                    Box.Size = Vector2.new(BoxWidth, BoxHeight)
+                    Box.Position = Vector2.new(RootPos.X - BoxWidth / 2, RootPos.Y - BoxHeight / 2)
+                    Box.Visible = true
+
+                    -- İsim ve Mesafe (Büyük Yazı)
+                    local Distance = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - RootPart.Position).Magnitude)
+                    Name.Text = Player.Name .. " [" .. Distance .. "m]"
+                    Name.Position = Vector2.new(RootPos.X, (RootPos.Y - BoxHeight / 2) - 25)
+                    Name.Visible = true
+                else
+                    Box.Visible = false
+                    Name.Visible = false
                 end
-            end)
-            table.insert(espConnections, conn)
-        end
-    end
-    
-    local playerAddedConn = Players.PlayerAdded:Connect(function(plr)
-        if plr == player then return end
-        local charAddedConn = plr.CharacterAdded:Connect(function()
-            task.wait(0.1)
-            if madebyYildiray then
-                createESP(plr)
+            else
+                Box.Visible = false
+                Name.Visible = false
+                
+                if not Player.Parent then
+                    Box:Remove()
+                    Name:Remove()
+                    Connection:Disconnect()
+                end
             end
         end)
-        table.insert(espConnections, charAddedConn)
-    end)
-    table.insert(espConnections, playerAddedConn)
+    end
+    coroutine.wrap(Update)()
 end
 
-local function disableESP()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        removeESP(plr)
-    end
-    for _, conn in ipairs(espConnections) do
-        if conn and conn.Connected then
-            conn:Disconnect()
-        end
-    end
-    espConnections = {}
+-- Mevcut Oyuncular
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then CreateESP(p) end
 end
 
--- Karakter değişince yenileme
-player.CharacterAdded:Connect(function()
-    task.wait(0.1)
-    if madebyYildiray then
-        enableESP()
-    else
-        disableESP()
-    end
-end)
+-- Yeni Gelenler
+Players.PlayerAdded:Connect(CreateESP)
 
-if madebyYildiray then
-    enableESP()
-end
+-- Başarı Bildirimi
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Yildiray ESP",
+    Text = "Büyük ve Modern ESP Aktif!",
+    Duration = 5
+})
